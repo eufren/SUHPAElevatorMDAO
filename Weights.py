@@ -13,8 +13,7 @@ class TailMassAndWeight(om.ExplicitComponent):
         self.add_output('tailWeight', units='N')
         self.add_output('tailMass', units='kg')
 
-        self.declare_partials(['tailMass'], ['tailSpan', 'tailChord', 'tailMassPerArea'])
-        self.declare_partials(['tailWeight'], ['tailSpan', 'tailChord', 'tailMassPerArea'])
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -29,21 +28,6 @@ class TailMassAndWeight(om.ExplicitComponent):
         outputs['tailMass'] = m_t
         outputs['tailWeight'] = W_t
 
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        b_t = inputs['tailSpan']
-        c_t = inputs['tailChord']
-        rho_t = inputs['tailMassPerArea']
-        g = inputs['g']
-
-        partials['tailMass', 'tailSpan'] = c_t * rho_t
-        partials['tailMass', 'tailChord'] = b_t * rho_t
-        partials['tailMass', 'tailMassPerArea'] = c_t * b_t
-
-        partials['tailWeight', 'tailSpan'] = c_t * rho_t * g
-        partials['tailWeight', 'tailChord'] = b_t * rho_t * g
-        partials['tailWeight', 'tailMassPerArea'] = c_t * b_t * g
-
 
 class BoomMassAndWeight(om.ExplicitComponent):
 
@@ -56,8 +40,7 @@ class BoomMassAndWeight(om.ExplicitComponent):
         self.add_output('boomMass', units='kg')
         self.add_output('boomWeight', units='N')
 
-        self.declare_partials(['boomMass'], ['tailDistance'])
-        self.declare_partials(['boomWeight'], ['tailDistance'])
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -70,15 +53,6 @@ class BoomMassAndWeight(om.ExplicitComponent):
 
         outputs['boomMass'] = m_boom
         outputs['boomWeight'] = W_boom
-
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        rho_boom = inputs['boomMassPerLength']
-        g = inputs['g']
-
-        partials['boomMass', 'tailDistance'] = rho_boom
-
-        partials['boomWeight', 'tailDistance'] = rho_boom * g
 
 
 class TotalCGDistance(om.ExplicitComponent):
@@ -97,7 +71,7 @@ class TotalCGDistance(om.ExplicitComponent):
 
         self.add_output('totalCGDistance', units='m')
 
-        self.declare_partials(['totalCGDistance'], ['wingMass', 'tailMass', 'boomMass', 'tailDistance', 'wingDistance', 'tailChord'], method='cs')
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 

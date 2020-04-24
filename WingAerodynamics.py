@@ -12,6 +12,8 @@ class WingDownwash(om.ExplicitComponent):
 
         self.add_output('dEpsilon_dAlpha', units='rad**-1')
 
+        self.declare_partials('*', '*', method='cs')
+
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
         CL_a = inputs['dCL_dAlpha']
@@ -29,27 +31,23 @@ class LiftCoefficientWing(om.ExplicitComponent):
 
         self.add_input('dCL_dAlpha', units='rad**-1')
         self.add_input('alpha', units='rad')
+        self.add_input('wingSettingAngle', units='rad')
         self.add_input('alphaZeroLift', units='rad')
 
         self.add_output('wingCL')
 
-        self.declare_partials(['wingCL'], ['alpha'])
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
         CL_a = inputs['dCL_dAlpha']
         alpha = inputs['alpha']
+        alpha_w = inputs['wingSettingAngle']
         alpha_0 = inputs['alphaZeroLift']
 
-        CL = CL_a*(alpha-alpha_0)
+        CL = CL_a*(alpha-alpha_w-alpha_0)
 
         outputs['wingCL'] = CL
-
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        CL_a = inputs['dCL_dAlpha']
-
-        partials['wingCL', 'alpha'] = CL_a
 
 
 class DragCoefficientWing(om.ExplicitComponent):
@@ -64,7 +62,7 @@ class DragCoefficientWing(om.ExplicitComponent):
 
         self.add_output('wingCD')
 
-        self.declare_partials(['wingCD'], ['wingCL'], method='cs')
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -92,7 +90,7 @@ class WingLift(om.ExplicitComponent):
 
         self.add_output('wingLift', units='N')
 
-        self.declare_partials(['wingLift'], ['wingCL'])
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -104,14 +102,6 @@ class WingLift(om.ExplicitComponent):
         L = 0.5 * rho * (V ** 2) * S * CL
 
         outputs['wingLift'] = L
-
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        V = inputs['airspeed']
-        rho = inputs['airDensity']
-        S = inputs['wingArea']
-
-        partials['wingLift', 'wingCL'] = 0.5 * rho * (V ** 2) * S
 
 
 class WingDrag(om.ExplicitComponent):
@@ -125,7 +115,7 @@ class WingDrag(om.ExplicitComponent):
 
         self.add_output('wingDrag', units='N')
 
-        self.declare_partials(['wingDrag'], ['wingCD'])
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -137,14 +127,6 @@ class WingDrag(om.ExplicitComponent):
         D = 0.5 * rho * (V ** 2) * S * CD
 
         outputs['wingDrag'] = D
-
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        V = inputs['airspeed']
-        rho = inputs['airDensity']
-        S = inputs['wingArea']
-
-        partials['wingDrag', 'wingCD'] = 0.5 * rho * (V ** 2) * S
 
 
 class WingMoment(om.ExplicitComponent):
@@ -159,7 +141,7 @@ class WingMoment(om.ExplicitComponent):
 
         self.add_output('wingMoment', units='N*m')
 
-        self.declare_partials(['wingMoment'], ['wingCM'])
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -172,15 +154,6 @@ class WingMoment(om.ExplicitComponent):
         M = 0.5 * rho * (V ** 2) * S * c * CM
 
         outputs['wingMoment'] = M
-
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        V = inputs['airspeed']
-        rho = inputs['airDensity']
-        S = inputs['wingArea']
-        c = inputs['wingMAC']
-
-        partials['wingMoment', 'wingCM'] = 0.5 * rho * (V ** 2) * S * c
 
 
 class WingGroup(om.Group):

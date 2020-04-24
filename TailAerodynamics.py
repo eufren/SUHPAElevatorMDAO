@@ -11,7 +11,7 @@ class AspectRatioTail(om.ExplicitComponent):
 
         self.add_output('tailAR')
 
-        self.declare_partials(['tailAR'], ['tailSpan', 'tailChord'])
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -21,14 +21,6 @@ class AspectRatioTail(om.ExplicitComponent):
         AR_t = b_t / c_t
 
         outputs['tailAR'] = AR_t
-
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        b_t = inputs['tailSpan']
-        c_t = inputs['tailChord']
-
-        partials['tailAR', 'tailSpan'] = 1/c_t
-        partials['tailAR', 'tailChord'] = (-b_t)/(c_t**2)
 
 
 class LiftCoefficientTail(om.ExplicitComponent):
@@ -43,7 +35,7 @@ class LiftCoefficientTail(om.ExplicitComponent):
         self.add_output('taildCLdAlpha', units='rad**-1')
 
         self.declare_partials(['tailCL'], ['alphaT', 'tailAR'])
-        self.declare_partials(['taildCLdAlpha'], ['*'], method='cs')
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -55,15 +47,6 @@ class LiftCoefficientTail(om.ExplicitComponent):
 
         outputs['taildCLdAlpha'] = 2*np.pi*(AR_t/(AR_t+2))
         outputs['tailCL'] = CL_t
-
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        AR_t = inputs['tailAR']
-        alpha_t = inputs['alphaT']
-        e_t = inputs['tailSpanwiseEfficiency']
-
-        partials['tailCL', 'tailAR'] = (4*np.pi*e_t*alpha_t)/((e_t*AR_t+2)**2)
-        partials['tailCL', 'alphaT'] = 2*np.pi*((AR_t*e_t)/(AR_t*e_t+2))
 
 
 class TailEffectiveAngle(om.ExplicitComponent):
@@ -80,7 +63,7 @@ class TailEffectiveAngle(om.ExplicitComponent):
 
         self.add_output('alphaT', units='rad')
 
-        self.declare_partials(['alphaT'], ['tailCL', 'tailAR', 'tailAngle', 'alpha', 'dEpsilon_dAlpha'])
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -96,21 +79,6 @@ class TailEffectiveAngle(om.ExplicitComponent):
 
         outputs['alphaT'] = alpha_T
 
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        alpha = inputs['alpha']
-        alpha_0 = inputs['alphaZeroLift']
-        epsilon_a = inputs['dEpsilon_dAlpha']
-        CL_t = inputs['tailCL']
-        AR_t = inputs['tailAR']
-        e_t = inputs['tailSpanwiseEfficiency']
-
-        partials['alphaT', 'tailCL'] = (-1)/(np.pi*AR_t*e_t)
-        partials['alphaT', 'tailAR'] = CL_t/(np.pi*(AR_t**2)*e_t)
-        partials['alphaT', 'tailAngle'] = 1
-        partials['alphaT', 'alpha'] = (1-epsilon_a)
-        partials['alphaT', 'dEpsilon_dAlpha'] = alpha_0-alpha
-
 
 class InducedDragCoefficientTail(om.ExplicitComponent):
 
@@ -122,7 +90,7 @@ class InducedDragCoefficientTail(om.ExplicitComponent):
 
         self.add_output('tailCDi')
 
-        self.declare_partials('tailCDi', ['tailCL', 'tailAR'])
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -133,15 +101,6 @@ class InducedDragCoefficientTail(om.ExplicitComponent):
         CDi_t = (CL_t**2)/(np.pi*AR_t*e_t)
 
         outputs['tailCDi'] = CDi_t
-
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        CL_t = inputs['tailCL']
-        AR_t = inputs['tailAR']
-        e_t = inputs['tailSpanwiseEfficiency']
-
-        partials['tailCDi', 'tailCL'] = (2*CL_t)/(np.pi*AR_t*e_t)
-        partials['tailCDi', 'tailAR'] = -(CL_t**2)/(np.pi*(AR_t**2)*e_t)
 
 
 class TailLift(om.ExplicitComponent):
@@ -156,7 +115,7 @@ class TailLift(om.ExplicitComponent):
 
         self.add_output('tailLift', units='N')
 
-        self.declare_partials(['tailLift'], ['tailCL', 'tailSpan', 'tailChord'])
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -169,18 +128,6 @@ class TailLift(om.ExplicitComponent):
         L_t = 0.5*rho*(V**2)*b_t*c_t*CL_t
 
         outputs['tailLift'] = L_t
-
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        CL_t = inputs['tailCL']
-        V = inputs['airspeed']
-        rho = inputs['airDensity']
-        b_t = inputs['tailSpan']
-        c_t = inputs['tailChord']
-
-        partials['tailLift', 'tailSpan'] = 0.5*rho*(V**2)*c_t*CL_t
-        partials['tailLift', 'tailChord'] = 0.5*rho*(V**2)*b_t*CL_t
-        partials['tailLift', 'tailCL'] = 0.5*rho*(V**2)*b_t*c_t
 
 
 class TailInducedDrag(om.ExplicitComponent):
@@ -195,7 +142,7 @@ class TailInducedDrag(om.ExplicitComponent):
 
         self.add_output('tailInducedDrag', units='N')
 
-        self.declare_partials(['tailInducedDrag'], ['tailCDi', 'tailSpan', 'tailChord'])
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -208,18 +155,6 @@ class TailInducedDrag(om.ExplicitComponent):
         Di_t = 0.5 * rho * (V ** 2) * b_t * c_t * CDi_t
 
         outputs['tailInducedDrag'] = Di_t
-
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        CDi_t = inputs['tailCDi']
-        V = inputs['airspeed']
-        rho = inputs['airDensity']
-        b_t = inputs['tailSpan']
-        c_t = inputs['tailChord']
-
-        partials['tailInducedDrag', 'tailSpan'] = 0.5 * rho * (V ** 2) * c_t * CDi_t
-        partials['tailInducedDrag', 'tailChord'] = 0.5 * rho * (V ** 2) * b_t * CDi_t
-        partials['tailInducedDrag', 'tailCDi'] = 0.5 * rho * (V ** 2) * b_t * c_t
 
 
 class TailSkinDrag(om.ExplicitComponent):
@@ -234,7 +169,7 @@ class TailSkinDrag(om.ExplicitComponent):
 
         self.add_output('tailSkinDrag', units='N')
 
-        self.declare_partials(['tailSkinDrag'], ['tailChord', 'tailSpan'], method='cs')
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 

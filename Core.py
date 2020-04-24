@@ -13,11 +13,12 @@ class ElevatorModel(om.Group):
         # Design variables
         designVars = self.add_subsystem('designVariables', om.IndepVarComp(), promotes=['*'])
         designVars.add_output('alpha', val=3, units='deg')
-        designVars.add_output('tailAngle', val=-3, units='deg')
-        designVars.add_output('tailChord', val=0.42, units='m')
+        designVars.add_output('tailAngle', val=3, units='deg')
+        designVars.add_output('tailChord', val=0.57, units='m')
         designVars.add_output('tailSpan', val=3, units='m')
         designVars.add_output('tailDistance', val=3.5, units='m')
         designVars.add_output('wingDistance', val=0.2, units='m')
+        designVars.add_output('wingSettingAngle', val=0, units='deg')
 
         # Wing parameters
         wingParams = self.add_subsystem('wingParameters', om.IndepVarComp(), promotes=['*'])
@@ -56,7 +57,7 @@ class ElevatorModel(om.Group):
         self.add_subsystem('wingGroup', WingGroup(),
                            promotes_inputs=['alpha', 'dCL_dAlpha', 'wingAR', 'wingSpanwiseEfficiency', 'alphaZeroLift',
                                             'wingCD_Min', 'wingCM', 'airspeed', 'airDensity',
-                                            'wingArea', 'wingMAC', 'wingCL_DMin'],
+                                            'wingArea', 'wingMAC', 'wingCL_DMin', 'wingSettingAngle'],
                            promotes_outputs=['dEpsilon_dAlpha', 'wingLift', 'wingDrag', 'wingMoment'])
 
 
@@ -95,7 +96,7 @@ prob.model = ElevatorModel()
 # Configure problem driver
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['optimizer'] = 'SLSQP'
-prob.driver.options['maxiter'] = 100
+prob.driver.options['maxiter'] = 250
 prob.driver.options['tol'] = 1e-5
 
 # Set information printing to
@@ -104,20 +105,20 @@ prob.driver.options['debug_print'] = ['desvars', 'ln_cons', 'nl_cons', 'objs']
 # Add design variables, constraints and objective
 prob.model.add_design_var('wingDistance', lower=0, upper=0.4)
 prob.model.add_design_var('tailChord', lower=0.2, upper=1)
-prob.model.add_design_var('tailSpan', lower=0.2, upper=5)
+prob.model.add_design_var('tailSpan', lower=0.2, upper=10)
 prob.model.add_design_var('tailDistance', lower=3, upper=6)
 prob.model.add_design_var('alpha', lower=-4, upper=6)
 prob.model.add_design_var('tailAngle', lower=-8, upper=8)
+#prob.model.add_design_var('wingSettingAngle', lower=-8, upper=8)
 
 prob.model.add_constraint('verticalForce', equals=0)
 prob.model.add_constraint('momentAboutCG', equals=0)
-prob.model.add_constraint('staticMargin', equals=3)
-
+prob.model.add_constraint('staticMargin', lower=8, upper=14)
 prob.model.add_objective('totalDrag')
 
 prob.setup()
 
 #prob.check_config()
-prob.check_partials(compact_print=True, show_only_incorrect=True)
-#prob.model.approx_totals()
-#prob.run_driver()
+#prob.check_partials(compact_print=True, show_only_incorrect=True)
+prob.model.approx_totals()
+prob.run_driver()

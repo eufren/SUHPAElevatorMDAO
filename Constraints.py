@@ -15,7 +15,7 @@ class TotalVerticalForce(om.ExplicitComponent):
 
         self.add_output('verticalForce', units='N')
 
-        self.declare_partials(['verticalForce'], ['wingLift', 'tailLift', 'tailWeight', 'boomWeight'])
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -38,13 +38,6 @@ class TotalVerticalForce(om.ExplicitComponent):
 
         outputs['verticalForce'] = F_tot
 
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        partials['verticalForce', 'wingLift'] = 1
-        partials['verticalForce', 'tailLift'] = 1
-        partials['verticalForce', 'tailWeight'] = -1
-        partials['verticalForce', 'boomWeight'] = -1
-
 
 class TotalDrag(om.ExplicitComponent):
 
@@ -56,7 +49,7 @@ class TotalDrag(om.ExplicitComponent):
 
         self.add_output('totalDrag', units='N')
 
-        self.declare_partials(['totalDrag'], ['wingDrag', 'tailInducedDrag', 'tailSkinDrag'])
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -67,12 +60,6 @@ class TotalDrag(om.ExplicitComponent):
         D_tot = D_w + Di_t + Df_t
 
         outputs['totalDrag'] = D_tot
-
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        partials['totalDrag', 'wingDrag'] = 1
-        partials['totalDrag', 'tailInducedDrag'] = 1
-        partials['totalDrag', 'tailSkinDrag'] = 1
 
 
 class TotalMomentAboutCG(om.ExplicitComponent):
@@ -90,7 +77,7 @@ class TotalMomentAboutCG(om.ExplicitComponent):
 
         self.add_output('momentAboutCG', units='N*m')
 
-        self.declare_partials(['momentAboutCG'], ['*'])
+        self.declare_partials('*', '*', method='cs')
 
     def compute(self, inputs, outputs, discrete_inputs=None, discrete_outputs=None):
 
@@ -107,35 +94,16 @@ class TotalMomentAboutCG(om.ExplicitComponent):
 
         outputs['momentAboutCG'] = M_CG
 
-    def compute_partials(self, inputs, partials, discrete_inputs=None):
-
-        x_CG = inputs['totalCGDistance']
-        x_w = inputs['wingDistance']
-        ho_c = inputs['wingACDistance']
-        x_t = inputs['tailDistance']
-        c_t = inputs['tailChord']
-        L = inputs['wingLift']
-        L_t = inputs['tailLift']
-
-        partials['momentAboutCG', 'wingMoment'] = 1
-        partials['momentAboutCG', 'tailChord'] = -0.25*L_t
-        partials['momentAboutCG', 'wingLift'] = x_CG - x_w - ho_c
-        partials['momentAboutCG', 'tailLift'] = -(x_t+0.25*c_t)+x_CG
-        partials['momentAboutCG', 'totalCGDistance'] = L + L_t
-        partials['momentAboutCG', 'wingDistance'] = - L
-        partials['momentAboutCG', 'wingACDistance'] = - L
-        partials['momentAboutCG', 'tailDistance'] = - L_t
-
 
 class TailVolume(om.ExplicitComponent):
 
     def setup(self):
 
-        self.add_input('tailChord')
-        self.add_input('tailSpan')
-        self.add_input('tailDistance')
-        self.add_input('wingArea')
-        self.add_input('wingMAC')
+        self.add_input('tailChord', units='m')
+        self.add_input('tailSpan', units='m')
+        self.add_input('tailDistance', units='m')
+        self.add_input('wingArea', units='m**2')
+        self.add_input('wingMAC', units='m')
 
         self.add_output('tailVolume')
 
@@ -195,4 +163,4 @@ class StaticMargin(om.ExplicitComponent):
 
         H_s = ho-h+K*(CL_at/CL_aStar)
 
-        outputs['staticMargin'] = H_s
+        outputs['staticMargin'] = H_s*100 # Percentage MAC
