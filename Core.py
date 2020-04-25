@@ -104,16 +104,15 @@ prob.driver.options['debug_print'] = ['desvars', 'ln_cons', 'nl_cons', 'objs']
 
 # Add design variables, constraints and objective
 prob.model.add_design_var('wingDistance', lower=0, upper=0.4)
-prob.model.add_design_var('tailChord', lower=0.2, upper=1)
+prob.model.add_design_var('tailChord', lower=0.2, upper=0.57)
 prob.model.add_design_var('tailSpan', lower=0.2, upper=10)
-prob.model.add_design_var('tailDistance', lower=3, upper=6)
 prob.model.add_design_var('alpha', lower=-4, upper=6)
 prob.model.add_design_var('tailAngle', lower=-8, upper=8)
-#prob.model.add_design_var('wingSettingAngle', lower=-8, upper=8)
+#prob.model.add_design_var('tailDistance', lower = 3, upper = 6)
 
 prob.model.add_constraint('verticalForce', equals=0)
 prob.model.add_constraint('momentAboutCG', equals=0)
-prob.model.add_constraint('staticMargin', lower=8, upper=14)
+prob.model.add_constraint('staticMargin', equals=5)
 prob.model.add_objective('totalDrag')
 
 prob.setup()

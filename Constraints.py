@@ -163,4 +163,4 @@ class StaticMargin(om.ExplicitComponent):
 
         H_s = ho-h+K*(CL_at/CL_aStar)
 
-        outputs['staticMargin'] = H_s*100 # Percentage MAC
+        outputs['staticMargin'] = H_s*100  # Percentage MAC
